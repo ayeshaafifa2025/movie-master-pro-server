@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
 
 
@@ -40,7 +40,13 @@ async function run() {
   //  Then we are creating collection(Where all the JSON data exist) named movies inside the movies database
   const moviesCollection = db.collection("movies");
   const popularCollection = db.collection("popular");
+  const usersCollection=db.collection("users");
 
+  app.post('/users',async(req,res)=>{
+    const newUser = req.body;
+    const result = await usersCollection.insertOne(newUser);
+    res.send(result);
+  })
 // just added sort based on rating and limit
   app.get('/movies', async(req, res) => {
     // If need to find by email,in the  browser  wright: http://localhost:3000/movies?addedBy=fariha@gmail.com
@@ -120,7 +126,7 @@ app.post('/popular', async (req, res) => {
          res.send(result);
        })
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     
   }
