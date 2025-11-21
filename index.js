@@ -61,8 +61,6 @@ async function run() {
   })
 
    app.get('/users', async(req, res) => {
-
-
     console.log(req.query)
     const email = req.query.email;
     const query= {}
@@ -73,6 +71,18 @@ async function run() {
     const result = await cursor.toArray();
     res.send(result)
 })
+   app.get('/sortedBy-CreateAt', async(req, res) => {
+    // console.log(req.query)
+    // const email = req.query.email;
+    // const query= {}
+    // if(email){
+    //   query.email = email;
+    // }
+    const cursor = moviesCollection.find().sort({createdAt:-1}).limit(6);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+
 
 // just added sort based on rating and limit
   app.get('/movies', async(req, res) => {
