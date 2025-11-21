@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -44,9 +45,35 @@ async function run() {
 
   app.post('/users',async(req,res)=>{
     const newUser = req.body;
-    const result = await usersCollection.insertOne(newUser);
+
+    const email = req.body.email;
+    const query= {email:email}
+    const existingUser = await usersCollection.findOne(query);
+    if(existingUser){
+      res.send({message: 'user already exist'})
+    }
+    else{
+        const result = await usersCollection.insertOne(newUser);
     res.send(result);
+    }
+
+  
   })
+
+   app.get('/users', async(req, res) => {
+
+
+    console.log(req.query)
+    const email = req.query.email;
+    const query= {}
+    if(email){
+      query.email = email;
+    }
+    const cursor = usersCollection.find(query);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+
 // just added sort based on rating and limit
   app.get('/movies', async(req, res) => {
     // If need to find by email,in the  browser  wright: http://localhost:3000/movies?addedBy=fariha@gmail.com
@@ -60,7 +87,7 @@ async function run() {
     }
     // const cursor = moviesCollection.find(query);
     // Here we are trying to get or read previously all inserted data through get API
-    const cursor = moviesCollection.find(query).sort({createdAt: -1});
+    const cursor = moviesCollection.find(query);
     const result = await cursor.toArray();
     res.send(result)
 })
