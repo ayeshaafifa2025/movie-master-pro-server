@@ -72,13 +72,12 @@ async function run() {
     res.send(result)
 })
    app.get('/sortedBy-CreateAt', async(req, res) => {
-    // console.log(req.query)
-    // const email = req.query.email;
-    // const query= {}
-    // if(email){
-    //   query.email = email;
-    // }
     const cursor = moviesCollection.find().sort({createdAt:-1}).limit(6);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+   app.get('/highly-rated', async(req, res) => {
+    const cursor = moviesCollection.find().sort({rating: -1}).limit(5);
     const result = await cursor.toArray();
     res.send(result)
 })
