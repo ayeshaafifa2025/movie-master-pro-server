@@ -42,6 +42,10 @@ async function run() {
   const moviesCollection = db.collection("movies");
   const popularCollection = db.collection("popular");
   const usersCollection=db.collection("users");
+  const heroCollection=db.collection("hero");
+
+
+
 
   app.post('/users',async(req,res)=>{
     const newUser = req.body;
@@ -71,6 +75,11 @@ async function run() {
     const result = await cursor.toArray();
     res.send(result)
 })
+
+
+
+
+
    app.get('/sortedBy-CreateAt', async(req, res) => {
     const cursor = moviesCollection.find().sort({createdAt:-1}).limit(6);
     const result = await cursor.toArray();
@@ -78,6 +87,11 @@ async function run() {
 })
    app.get('/highly-rated', async(req, res) => {
     const cursor = moviesCollection.find().sort({rating: -1}).limit(5);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+   app.get('/hero', async(req, res) => {
+    const cursor = heroCollection.find();
     const result = await cursor.toArray();
     res.send(result)
 })
@@ -115,6 +129,11 @@ app.get('/movies/:id', async(req, res) => {
   app.post('/movies', async (req, res) => {
          const newMovie = req.body;
         const result = await moviesCollection.insertOne(newMovie);
+         res.send(result);
+       })
+  app.post('/hero', async (req, res) => {
+         const newData = req.body;
+        const result = await heroCollection.insertOne(newData);
          res.send(result);
        })
 // Here we are trying to update an existing data mentioning its ID through patch API
