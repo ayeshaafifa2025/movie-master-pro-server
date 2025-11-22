@@ -43,8 +43,7 @@ async function run() {
   const popularCollection = db.collection("popular");
   const usersCollection=db.collection("users");
   const heroCollection=db.collection("hero");
-
-
+  const watchCollection=db.collection("watched");
 
 
   app.post('/users',async(req,res)=>{
@@ -174,10 +173,25 @@ app.get('/popular', async (req, res) => {
             const result = await cursor.toArray();
             res.send(result);
         })
+app.get('/watched', async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.email = email;
+            }
+            const cursor = watchCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
       
 app.post('/popular', async (req, res) => {
          const newPopular = req.body;
         const result = await popularCollection.insertOne(newPopular);
+         res.send(result);
+       })
+app.post('/watched', async (req, res) => {
+         const newWatched = req.body;
+        const result = await watchCollection.insertOne(newWatched);
          res.send(result);
        })
     await client.db("admin").command({ ping: 1 });
