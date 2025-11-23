@@ -14,8 +14,6 @@ app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wstr9pt.mongodb.net/?appName=Cluster0`;
 
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -31,21 +29,15 @@ app.get('/', (req, res) => {
 async function run() {
   try {
     // await client.connect();
-
-
-
-    // Tried making this collection to try with Thunder client with Demo data
-
-    // At first here are making a database named movie master in MongoDB database server
-   const db = client.db("movie_master");
   
+   const db = client.db("movie_master");
   const moviesCollection = db.collection("movies");
   const popularCollection = db.collection("popular");
   const usersCollection=db.collection("users");
   const heroCollection=db.collection("hero");
   const watchCollection=db.collection("watched");
 
-
+// users
   app.post('/users',async(req,res)=>{
     const newUser = req.body;
 
@@ -73,7 +65,8 @@ async function run() {
     const result = await cursor.toArray();
     res.send(result)
 })
-// for popular
+
+// popular
 app.get('/popular', async (req, res) => {
             const email = req.query.email;
             const query = {};
@@ -86,35 +79,27 @@ email = email;
             const result = await cursor.toArray();
             res.send(result);
         })
-
       
 app.post('/popular', async (req, res) => {
          const newPopular = req.body;
         const result = await popularCollection.insertOne(newPopular);
          res.send(result);
        })
-
-
-
-   app.get('/sortedBy-CreateAt', async(req, res) => {
-    const cursor = moviesCollection.find().sort({createdAt:-1}).limit(6);
-    const result = await cursor.toArray();
-    res.send(result)
+       app.get('/popular/:id', async(req, res) => {
+    const id = req.params.id;
+   const query = {_id : new ObjectId(id)}
+    const result = await popularCollection.findOne(query);
+    res.send(result);
 })
-   app.get('/highly-rated', async(req, res) => {
-    const cursor = moviesCollection.find().sort({rating: -1}).limit(5);
-    const result = await cursor.toArray();
-    res.send(result)
-})
-   app.get('/hero', async(req, res) => {
-    const cursor = heroCollection.find();
-    const result = await cursor.toArray();
-    res.send(result)
-})
+ app.delete('/popular/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await popularCollection.deleteOne(query);
+      res.send(result);})
 
 
-// just added sort based on rating and limit
-  app.get('/movies', async(req, res) => {
+// movies
+app.get('/movies', async(req, res) => {
     console.log(req.query)
     const email = req.query.email;
     const query= {};
@@ -143,7 +128,6 @@ app.post('/popular', async (req, res) => {
     res.send(result)
 })
 
-// Here we are trying to get or read previously one inserted data through get API
 
 app.get('/movies/:id', async(req, res) => {
     const id = req.params.id;
@@ -151,21 +135,16 @@ app.get('/movies/:id', async(req, res) => {
     const result = await moviesCollection.findOne(query);
     res.send(result);
 })
-app.get('/popular/:id', async(req, res) => {
-    const id = req.params.id;
-   const query = {_id : new ObjectId(id)}
-    const result = await popularCollection.findOne(query);
-    res.send(result);
-})
 
-// Here we insert sum JSON data from client side through post API
+
+
   app.post('/movies', async (req, res) => {
          const newMovie = req.body;
         const result = await moviesCollection.insertOne(newMovie);
          res.send(result);
        })
 
-// Here we are trying to update an existing data mentioning its ID through patch API
+
   app.patch('/update/:id',async(req,res)=>{
     const id = req.params.id;
     const updatedMovie = req.body;
@@ -209,27 +188,26 @@ app.get('/popular/:id', async(req, res) => {
 
 
   })
- // Here we are trying to delete an existing data mentioning its ID through delete API
+ 
   app.delete('/movies/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await moviesCollection.deleteOne(query);
       res.send(result);})
-  app.delete('/popular/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
-      const result = await popularCollection.deleteOne(query);
-      res.send(result);})
 
-        app.post('/hero', async (req, res) => {
+// hero
+ app.post('/hero', async (req, res) => {
          const newData = req.body;
         const result = await heroCollection.insertOne(newData);
          res.send(result);
        })
+   app.get('/hero', async(req, res) => {
+    const cursor = heroCollection.find();
+    const result = await cursor.toArray();
+    res.send(result)
+})
 
-
-
-
+// watchlist
 
        app.get('/watched', async (req, res) => {
             const email = req.query.email;
@@ -246,6 +224,29 @@ app.post('/watched', async (req, res) => {
         const result = await watchCollection.insertOne(newWatched);
          res.send(result);
        })
+
+
+// others
+
+   app.get('/sortedBy-CreateAt', async(req, res) => {
+    const cursor = moviesCollection.find().sort({createdAt:-1}).limit(6);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+   app.get('/highly-rated', async(req, res) => {
+    const cursor = moviesCollection.find().sort({rating: -1}).limit(5);
+    const result = await cursor.toArray();
+    res.send(result)
+})
+
+
+
+
+  
+ 
+
+       
+
     await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
