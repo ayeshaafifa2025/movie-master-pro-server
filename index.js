@@ -38,7 +38,7 @@ async function run() {
 
     // At first here are making a database named movie master in MongoDB database server
    const db = client.db("movie_master");
-  //  Then we are creating collection(Where all the JSON data exist) named movies inside the movies database
+  
   const moviesCollection = db.collection("movies");
   const popularCollection = db.collection("popular");
   const usersCollection=db.collection("users");
@@ -52,6 +52,7 @@ async function run() {
     const email = req.body.email;
     const query= {email:email}
     const existingUser = await usersCollection.findOne(query);
+    console.log(newUser,email,query,existingUser);
     if(existingUser){
       res.send({message: 'user already exist'})
     }
@@ -59,8 +60,6 @@ async function run() {
         const result = await usersCollection.insertOne(newUser);
     res.send(result);
     }
-
-  
   })
 
    app.get('/users', async(req, res) => {
@@ -74,8 +73,26 @@ async function run() {
     const result = await cursor.toArray();
     res.send(result)
 })
+// for popular
+app.get('/popular', async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.
+email = email;
+            }
 
+            const cursor = popularCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
+      
+app.post('/popular', async (req, res) => {
+         const newPopular = req.body;
+        const result = await popularCollection.insertOne(newPopular);
+         res.send(result);
+       })
 
 
 
@@ -98,17 +115,29 @@ async function run() {
 
 // just added sort based on rating and limit
   app.get('/movies', async(req, res) => {
-    // If need to find by email,in the  browser  wright: http://localhost:3000/movies?addedBy=fariha@gmail.com
-    // That means among all data I can just find one data based on email
-
     console.log(req.query)
     const email = req.query.email;
-    const query= {}
+    const query= {};
     if(email){
       query.email = email;
     }
-    // const cursor = moviesCollection.find(query);
-    // Here we are trying to get or read previously all inserted data through get API
+    if(req.query.genre){
+      const genresArray = req.query.genre.split(',');
+      query.genre ={$in:genresArray};
+    }
+     if (req.query.minRange && req.query.maxRange) {
+        const min = parseFloat(req.query.minRange);
+        const max = parseFloat(req.query.maxRange);
+
+        if (!isNaN(min) && !isNaN(max)) {
+             query.rating = { 
+                $gte: min, 
+                $lte: max 
+            };
+        }
+    }
+    
+    console.log("Mongodb query",query);
     const cursor = moviesCollection.find(query);
     const result = await cursor.toArray();
     res.send(result)
@@ -121,7 +150,12 @@ app.get('/movies/:id', async(req, res) => {
     const query = {_id : new ObjectId(id)}
     const result = await moviesCollection.findOne(query);
     res.send(result);
-
+})
+app.get('/popular/:id', async(req, res) => {
+    const id = req.params.id;
+   const query = {_id : new ObjectId(id)}
+    const result = await popularCollection.findOne(query);
+    res.send(result);
 })
 
 // Here we insert sum JSON data from client side through post API
@@ -130,12 +164,35 @@ app.get('/movies/:id', async(req, res) => {
         const result = await moviesCollection.insertOne(newMovie);
          res.send(result);
        })
-  app.post('/hero', async (req, res) => {
-         const newData = req.body;
-        const result = await heroCollection.insertOne(newData);
-         res.send(result);
-       })
+
 // Here we are trying to update an existing data mentioning its ID through patch API
+  app.patch('/update/:id',async(req,res)=>{
+    const id = req.params.id;
+    const updatedMovie = req.body;
+    const query = { _id: new ObjectId(id) }
+    const update = {
+      $set:{
+        title : updatedMovie.title,
+        genre : updatedMovie.genre,
+        email : updatedMovie.email,
+        releaseYear : updatedMovie.releaseYear,
+        posterUrl : updatedMovie.posterUrl,
+        director : updatedMovie.director,
+        cast : updatedMovie.cast,
+        rating : updatedMovie.rating,
+        duration : updatedMovie.duration,
+        plotSummary : updatedMovie.plotSummary,
+        language : updatedMovie.language,
+        country : updatedMovie.country,
+        createdAt : updatedMovie.createdAt,
+        
+      }
+    }
+    const options={}
+    const result = await popularCollection.updateOne(query,update)
+    res.send(result)
+  })
+
   app.patch('/movies/:id',async(req,res)=>{
     const id = req.params.id;
     const updatedProduct = req.body;
@@ -158,22 +215,23 @@ app.get('/movies/:id', async(req, res) => {
       const query = { _id: new ObjectId(id) }
       const result = await moviesCollection.deleteOne(query);
       res.send(result);})
+  app.delete('/popular/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await popularCollection.deleteOne(query);
+      res.send(result);})
+
+        app.post('/hero', async (req, res) => {
+         const newData = req.body;
+        const result = await heroCollection.insertOne(newData);
+         res.send(result);
+       })
 
 
 
-// for popular
-app.get('/popular', async (req, res) => {
-            const email = req.query.email;
-            const query = {};
-            if (email) {
-                query.email = email;
-            }
 
-            const cursor = popularCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
-app.get('/watched', async (req, res) => {
+
+       app.get('/watched', async (req, res) => {
             const email = req.query.email;
             const query = {};
             if (email) {
@@ -183,12 +241,6 @@ app.get('/watched', async (req, res) => {
             const result = await cursor.toArray();
             res.send(result);
         })
-      
-app.post('/popular', async (req, res) => {
-         const newPopular = req.body;
-        const result = await popularCollection.insertOne(newPopular);
-         res.send(result);
-       })
 app.post('/watched', async (req, res) => {
          const newWatched = req.body;
         const result = await watchCollection.insertOne(newWatched);
