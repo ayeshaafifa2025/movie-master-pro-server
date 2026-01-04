@@ -226,6 +226,63 @@ app.post('/watched', async (req, res) => {
        })
 
 
+ 
+app.get('/user/dashboard-stats', async (req, res) => {
+    const userEmail = req.query.email; 
+    
+    if (!userEmail) {
+        return res.status(400).send({ message: 'Email query parameter is required' });
+    }
+    
+    try {
+        const totalCollection = await popularCollection.countDocuments({ email: userEmail }); 
+
+        const totalWatchlist = await watchCollection.countDocuments({ email: userEmail }); 
+
+        const genreStats = await popularCollection.aggregate([
+            { $match: { email: userEmail } },
+            
+            {
+                $project: {
+                    _id: 0,
+                    genreList: { $split: ["$genre", ", "] }
+                }
+            },
+            
+            { $unwind: "$genreList" }, 
+            
+            {
+                $group: {
+                    _id: { $trim: { input: "$genreList" } },
+                    count: { $sum: 1 }
+                }
+            }, 
+            
+            { $match: { _id: { $ne: "" } } }, 
+
+            { $sort: { count: -1 } }
+        ]).toArray();
+        
+        
+        const recentWatched = await watchCollection.find({ email: userEmail })
+            .sort({ _id: -1 })
+            .limit(5)
+            .toArray();
+
+        res.send({
+            totalCollection,
+            totalWatchlist,
+            genreStats,
+            recentWatched,
+        });
+
+    } catch (error) {
+        console.error("Critical Aggregation Error in Dashboard Stats:", error);
+        res.status(500).send({ message: 'Failed to retrieve user dashboard stats', error: error.message });
+    }
+});
+
+
 // others
 
    app.get('/sortedBy-CreateAt', async(req, res) => {
@@ -238,16 +295,7 @@ app.post('/watched', async (req, res) => {
     const result = await cursor.toArray();
     res.send(result)
 })
-
-
-
-
-  
- 
-
-       
-
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     
