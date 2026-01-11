@@ -129,6 +129,16 @@ app.get('/movies', async(req, res) => {
 })
 
 
+
+
+
+
+
+
+
+
+
+
 app.get('/movies/:id', async(req, res) => {
     const id = req.params.id;
     const query = {_id : new ObjectId(id)}
